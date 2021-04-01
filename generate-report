@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e
+
+python3 open-pool-report/Main.py "$@"
+
+
