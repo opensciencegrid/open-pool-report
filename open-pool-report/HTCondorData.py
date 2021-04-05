@@ -23,10 +23,24 @@ class HTCondorData(object):
         "12-122": "Disk quota exceeded (home)",
         "12-28": "No space left on device",
         "13-2": "No such file or directory",
+        "13-13": "Error reading from ...: (errno 13) Permission denied; SHADOW failed to receive file(s)",
         "21-0": "Job failed to complete in 72 hrs",
+        "22-0": "Failed to initialize user log to ...",
         "21-102": "memory usage exceeded request_memory",
         "21-103": "disk usage exceeded request_disk",
         "34-0": "Job has gone over memory limit"
+    }
+    
+    default_expressions = {
+        'PeriodicRelease': ['False'], 
+        'PeriodicHold': ['False'], 
+        'PeriodicRemove': ['False'], 
+        'OnExitHold': ['False',
+                       '(ExitBySignal == true) || (ExitCode != 0)'],
+        'OnExitRemove': ['True',
+                         'NumJobCompletions > JobMaxRetries || ExitCode == 0',
+                         '(ExitBySignal == false) && (ExitCode == 0)',
+                         '(ExitSignal is 11 || (ExitCode isnt undefined && ExitCode >= 0 && ExitCode <= 2))']
     }
 
     def __init__(self):
@@ -55,10 +69,13 @@ class HTCondorData(object):
             # get a ref to the summary record for the user
             if job['User'] not in summary:
                 summary[job['User']] = {}
+                username = re.sub('@.*', '', job['User'])
+                summary[job['User']]['PrintableUser'] =  '{}@{}'.format(username, job['SubmitHost'])
                 summary[job['User']]['Statuses'] = {}
                 summary[job['User']]['Holds'] = {}
                 summary[job['User']]['PeriodicRelease'] = {}
                 summary[job['User']]['PeriodicHold'] = {}
+                summary[job['User']]['PeriodicRemove'] = {}
                 summary[job['User']]['OnExitHold'] = {}
                 summary[job['User']]['OnExitRemove'] = {}
             s = summary[job['User']]
@@ -67,22 +84,11 @@ class HTCondorData(object):
             self._add_to_counter(1, s, 'Statuses', job['JobStatus'])
             
             # release/exit expressions
-            if 'PeriodicRelease' in job:
-                # filter out some basic ones we are not interested in
-                if str(job['PeriodicRelease']) != 'False':
-                    self._add_to_counter(1, s['PeriodicRelease'], str(job['PeriodicRelease']))
-            if 'PeriodicHold' in job:
-                # filter out some basic ones we are not interested in
-                if str(job['PeriodicHold']) != 'False':
-                    self._add_to_counter(1, s['PeriodicHold'], str(job['PeriodicHold']))
-            if 'OnExitHold' in job:
-                # filter out some basic ones we are not interested in
-                if str(job['OnExitHold']) != '(ExitBySignal == true) || (ExitCode != 0)':
-                    self._add_to_counter(1, s['OnExitHold'], str(job['OnExitHold']))
-            if 'OnExitRemove' in job:
-                # filter out some basic ones we are not interested in
-                if str(job['OnExitRemove']) != 'False':
-                    self._add_to_counter(1, s['OnExitRemove'], str(job['OnExitRemove']))
+            for category in ['PeriodicRelease', 'PeriodicHold', 'PeriodicRemove', 'OnExitHold', 'OnExitRemove']:
+                if category in job:
+                    # filter out some basic ones we are not interested in
+                    if not str(job[category]) in self.default_expressions[category]:
+                        self._add_to_counter(1, s[category], str(job[category]))
 
             # hold reasons
             if 'HoldReasonCode' in job and 'HoldReasonSubCode' in job:
@@ -97,7 +103,7 @@ class HTCondorData(object):
                     reason = self.hold_codes[code]
                 self._add_to_counter(1, s, 'Holds', reason)
 
-        return summary    
+        return [summary, self.job_ads]    
     
     def _discover_schedds(self):
 
@@ -128,8 +134,13 @@ class HTCondorData(object):
                   'NumShadowStarts',
                   'PeriodicHold',
                   'PeriodicRelease',
+                  'PeriodicRemove',
+                  'OnExitHold',
+                  'OnExitRemove',
                   'ProcId',
                   'ProjectName',
+                  'SingularityImage',
+                  'Requirements',
                   'RequestCpus',
                   'RequestMemory',
                   'User'
@@ -147,6 +158,9 @@ class HTCondorData(object):
             # optionally filter the users we are want to include
             if usergrep and not re.search(usergrep,j['User']):
                 continue
+            
+            # add submit node information
+            j['SubmitHost'] = schedd['Name']
             
             self.job_ads.append(j)
             

@@ -63,17 +63,19 @@ def main(argv=None): # IGNORE:C0111
 
         htcondor = HTCondorData()
         htcondor.discover(args.usergrep)
-        summary = htcondor.summarize_jobs()
+        summary, jobs = htcondor.summarize_jobs()
     
         if verbose:
+            pprint(summary['rynge@services.ci-connect.net'])
             pprint(summary['dweitzel@services.ci-connect.net'])
             pprint(summary['ghutchis@services.ci-connect.net'])
 
-        report = EmailReport(sendto, summary, verbose)
+        report = EmailReport(sendto, summary, jobs, verbose)
         
         # what sections do we want to include?
-        report.add_periodic_exit_exprs()
+        report.add_summary()
         report.add_holds()
+        report.add_periodic_exit_exprs()
         
         report.send()
         
