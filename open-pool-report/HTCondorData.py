@@ -34,7 +34,8 @@ class HTCondorData(object):
     default_expressions = {
         'PeriodicRelease': ['False'], 
         'PeriodicHold': ['False'], 
-        'PeriodicRemove': ['False'], 
+        'PeriodicRemove': ['False',
+                           '(JobStatus == 5) && ((CurrentTime - EnteredCurrentStatus) > 1800)'],  # Pegasus 
         'OnExitHold': ['False',
                        '(ExitBySignal == true) || (ExitCode != 0)'],
         'OnExitRemove': ['True',

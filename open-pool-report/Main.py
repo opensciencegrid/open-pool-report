@@ -66,9 +66,8 @@ def main(argv=None): # IGNORE:C0111
         summary, jobs = htcondor.summarize_jobs()
     
         if verbose:
-            pprint(summary['rynge@services.ci-connect.net'])
-            pprint(summary['dweitzel@services.ci-connect.net'])
-            pprint(summary['ghutchis@services.ci-connect.net'])
+            if 'rynge@services.ci-connect.net' in summary:
+                pprint(summary['rynge@services.ci-connect.net'])
 
         report = EmailReport(sendto, summary, jobs, verbose)
         
