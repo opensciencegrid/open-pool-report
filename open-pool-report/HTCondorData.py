@@ -19,15 +19,16 @@ class HTCondorData(object):
     
     hold_codes = {
         "3-0": "periodic_hold",
+        "7-28": "Error from ...: Failed to open '/.../_condor_stdout' as standard output: No space left on device ",
         "12-2": "unknown",
-        "12-122": "Disk quota exceeded (home)",
         "12-28": "No space left on device",
+        "12-122": "Disk quota exceeded (home)",
         "13-2": "No such file or directory",
         "13-13": "Error reading from ...: (errno 13) Permission denied; SHADOW failed to receive file(s)",
         "21-0": "Job failed to complete in 72 hrs",
-        "22-0": "Failed to initialize user log to ...",
         "21-102": "memory usage exceeded request_memory",
         "21-103": "disk usage exceeded request_disk",
+        "22-0": "Failed to initialize user log to ...",
         "34-0": "Job has gone over memory limit"
     }
     
