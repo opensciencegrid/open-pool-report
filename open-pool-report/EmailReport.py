@@ -86,7 +86,9 @@ class EmailReport(object):
 
 
     def add_holds(self):
-        self.body += '\n<h2>Held jobs</h2>\n<ul>\n'
+        self.body += '\n<h2>Held jobs</h2>\n\n'
+        self.body += '\n<p>Hold reasons are grouped on [Code .. SubCode ..]. One representative full hold reason is provided,' \
+                   + ' but details like hosts, file paths, and resource amounts might vary within the grouping.</p>\n<ul>\n'
         for user, details in self.data.items():
             
             idle = 0

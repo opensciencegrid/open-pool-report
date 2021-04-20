@@ -17,21 +17,6 @@ class HTCondorData(object):
     schedds = []
     job_ads = []
     
-    hold_codes = {
-        "3-0": "periodic_hold",
-        "7-28": "Error from ...: Failed to open '/.../_condor_stdout' as standard output: No space left on device ",
-        "12-2": "unknown",
-        "12-28": "No space left on device",
-        "12-122": "Disk quota exceeded (home)",
-        "13-2": "No such file or directory",
-        "13-13": "Error reading from ...: (errno 13) Permission denied; SHADOW failed to receive file(s)",
-        "21-0": "Job failed to complete in 72 hrs",
-        "21-102": "memory usage exceeded request_memory",
-        "21-103": "disk usage exceeded request_disk",
-        "22-0": "Failed to initialize user log to ...",
-        "34-0": "Job has gone over memory limit"
-    }
-    
     default_expressions = {
         'PeriodicRelease': ['False'], 
         'PeriodicHold': ['False'], 
@@ -94,15 +79,15 @@ class HTCondorData(object):
 
             # hold reasons
             if 'HoldReasonCode' in job and 'HoldReasonSubCode' in job:
-                reason = '{} ({} {})'.format(job['HoldReason'], job['HoldReasonCode'], job['HoldReasonSubCode'])
+                codes = '[Code {} SubCode {}]'.format(job['HoldReasonCode'], job['HoldReasonSubCode'])
+                reason = '{} {}'.format(job['HoldReason'], codes)
                 
-                # a little bit of summarization
-                reason = re.sub('Error from \S+:', 'Error from ...:', reason)
-                reason = re.sub('SYSTEM_PERIODIC_HOLD due to memory usage \S+', 'SYSTEM_PERIODIC_HOLD due to memory usage ...', reason)
-                
-                code = '{}-{}'.format(job['HoldReasonCode'], job['HoldReasonSubCode'])
-                if code in self.hold_codes:
-                    reason = self.hold_codes[code]
+                # check if we already have a similar hold reason
+                for old_reason, old_count in s['Holds'].items():
+                    if codes in old_reason:
+                        reason = old_reason
+                        break
+
                 self._add_to_counter(1, s, 'Holds', reason)
 
         return [summary, self.job_ads]    
