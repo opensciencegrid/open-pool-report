@@ -26,6 +26,7 @@ class HTCondorData(object):
                        '(ExitBySignal == true) || (ExitCode != 0)'],
         'OnExitRemove': ['True',
                          'NumJobCompletions > JobMaxRetries || ExitCode == 0',
+                         'NumJobCompletions > JobMaxRetries || ExitCode == 0 || (ExitBySignal == false) && (ExitCode == 0)',
                          '(ExitBySignal == false) && (ExitCode == 0)',
                          '(ExitSignal is 11 || (ExitCode isnt undefined && ExitCode >= 0 && ExitCode <= 2))']
     }
